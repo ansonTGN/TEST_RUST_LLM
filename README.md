@@ -125,4 +125,3 @@ Desarrollado por **Ángel A. Urbina**, 2025.
 * [Ollama](https://ollama.com/) – Servidor local para modelos de lenguaje
 * [Axum](https://docs.rs/axum) – Framework web asíncrono en Rust
 * [OpenAI API](https://platform.openai.com/docs/api-reference)
-

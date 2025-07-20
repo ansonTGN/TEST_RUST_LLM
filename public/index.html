@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cliente Multi LLM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    form {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 0.4rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    button {
+      margin-top: 1.5rem;
+      padding: 0.8rem 1.5rem;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    #respuesta {
+      max-width: 600px;
+      margin: 2rem auto;
+      background: #e6f0ff;
+      border-left: 6px solid #007BFF;
+      padding: 1rem;
+      white-space: pre-wrap;
+    }
+
+    .loading {
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 Cliente Multi LLM</h1>
+  <form id="prompt-form">
+    <label for="url">URL del servidor Ollama:</label>
+    <input type="text" id="url" name="url" value="http://127.0.0.1:11434" required />
+
+    <label for="model">Modelo disponible:</label>
+    <select id="model" name="model" required>
+      <option value="">Cargando modelos...</option>
+    </select>
+
+    <label for="prompt">Prompt:</label>
+    <textarea id="prompt" name="prompt" rows="6" required></textarea>
+
+    <button type="submit">Enviar Prompt</button>
+  </form>
+
+  <div id="respuesta"></div>
+
+  <script>
+    const form = document.getElementById("prompt-form");
+    const modelSelect = document.getElementById("model");
+    const respuestaDiv = document.getElementById("respuesta");
+
+    async function cargarModelos(url) {
+      modelSelect.innerHTML = '<option value="">Cargando modelos...</option>';
+      try {
+        const res = await fetch(`/api/models?url=${encodeURIComponent(url)}`);
+        const models = await res.json();
+        modelSelect.innerHTML = "";
+        for (const model of models) {
+          const option = document.createElement("option");
+          option.value = model;
+          option.textContent = model;
+          modelSelect.appendChild(option);
+        }
+      } catch (err) {
+        modelSelect.innerHTML = '<option value="">❌ Error al cargar modelos</option>';
+      }
+    }
+
+    document.getElementById("url").addEventListener("change", (e) => {
+      const url = e.target.value;
+      if (url) cargarModelos(url);
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      respuestaDiv.textContent = "⏳ Procesando...";
+      form.classList.add("loading");
+
+      const url = form.url.value.trim();
+      const model = form.model.value.trim();
+      const prompt = form.prompt.value.trim();
+
+      const res = await fetch("/api/prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, model, prompt }),
+      });
+
+      const json = await res.json();
+      respuestaDiv.textContent = `✅ Respuesta:\n\n${json.response}`;
+      form.classList.remove("loading");
+    });
+
+    // Cargar modelos por defecto
+    window.addEventListener("DOMContentLoaded", () => {
+      const defaultUrl = document.getElementById("url").value;
+      if (defaultUrl) cargarModelos(defaultUrl);
+    });
+  </script>
+</body>
+</html>
+
+
+
